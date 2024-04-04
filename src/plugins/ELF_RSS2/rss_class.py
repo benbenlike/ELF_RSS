@@ -50,10 +50,10 @@ class Rss:
         if URL(self.url).scheme in ["http", "https"]:
             return self.url
         # 先判断地址是否 / 开头
-        if self.url.startswith("/"):
-            return rsshub + self.url
+        #if self.url.startswith("/"):
+        return rsshub + self.url
 
-        return f"{rsshub}/{self.url}"
+        #return f"{rsshub}/{self.url}"
 
     # 读取记录
     @staticmethod

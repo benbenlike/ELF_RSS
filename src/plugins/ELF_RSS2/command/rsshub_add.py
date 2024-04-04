@@ -57,6 +57,7 @@ async def handle_rsshub_routes(
         await RSSHUB_ADD.reject("路由名不能为空，请重新输入")
         return
 
+    state["route"] = route
     rsshub_url = URL(str(config.rsshub))
     # 对本机部署的 RSSHub 不使用代理
     local_host = [
@@ -71,22 +72,22 @@ async def handle_rsshub_routes(
     global rsshub_routes
     if not rsshub_routes:
         async with aiohttp.ClientSession() as session:
-            resp = await session.get(rsshub_url.with_path("api/routes"), proxy=proxy)
+            resp = await session.get(rsshub_url.with_path("api/namespace"), proxy=proxy)
             if resp.status != 200:
                 await RSSHUB_ADD.finish(
                     "获取路由数据失败，请检查 RSSHub 的地址配置及网络连接"
                 )
             rsshub_routes = await resp.json()
 
-    if route not in rsshub_routes["data"]:
+    if route not in rsshub_routes.keys():
         await RSSHUB_ADD.reject(f"未找到名为 {route} 的 RSSHub 路由，请重新输入")
     else:
-        route_list = state["route_list"] = rsshub_routes["data"][route]["routes"]
+        route_list = state["route_list"] = rsshub_routes[route]["routes"]
         if len(route_list) > 1:
             await RSSHUB_ADD.send(
-                "请输入序号来选择要订阅的 RSSHub 路由：\n"
+                "请回复选择要订阅的 RSSHub 路由：\n"
                 + "\n".join(
-                    f"{index + 1}. {_route}" for index, _route in enumerate(route_list)
+                    f"{_route}" for index, _route in enumerate(route_list)
                 )
             )
         else:
@@ -97,8 +98,8 @@ async def handle_rsshub_routes(
 async def handle_route_index(
     state: T_State, route_index: str = ArgPlainText("route_index")
 ) -> None:
-    route = state["route_list"][int(route_index) - 1]
-    if args := [i for i in route.split("/") if i.startswith(":")]:
+    #route = state["route_list"][route_index]
+    if args := [i for i in route_index.split("/") if i.startswith(":")]:
         await RSSHUB_ADD.send(
             '请依次输入要订阅的 RSSHub 路由参数，并用 "/" 分隔：\n'
             + "/".join(
@@ -118,10 +119,9 @@ async def handle_route_args(
     route_index: str = ArgPlainText("route_index"),
     route_args: str = ArgPlainText("route_args"),
 ) -> None:
-    route = state["route_list"][int(route_index) - 1]
-    feed_url = "/".join([i for i in route.split("/") if not i.startswith(":")])
+    #route = state["route_list"][route_index]
+    feed_url = "/".join([i for i in route_index.split("/") if not i.startswith(":")])
     for i in route_args.split("/"):
         if len(i.strip("#")) > 0:
             feed_url += f"/{i}"
-
-    await add_feed(name, feed_url.lstrip("/"), event)
+    await add_feed(name, state["route"] + feed_url, event)

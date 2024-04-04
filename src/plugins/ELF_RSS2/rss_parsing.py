@@ -128,7 +128,6 @@ async def auto_stop_and_notify_admin(rss: Rss, bot: Bot) -> None:
         msg = f"{rss.name}[{rss.get_url()}]第一次抓取失败！已自动停止更新！请检查订阅地址{cookies_str}！"
     await send_message_to_admin(msg, bot)
 
-
 async def fetch_rss_backup(
     rss: Rss, session: aiohttp.ClientSession, proxy: Optional[str]
 ) -> Dict[str, Any]:
