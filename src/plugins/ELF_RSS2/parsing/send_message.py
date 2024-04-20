@@ -39,6 +39,7 @@ async def send_msg(
                         items,
                         header_message,
                         rss.send_forward_msg,
+                        rss.send_merge_msg,
                     )
                     for user_id in rss.user_id
                 ]
@@ -56,6 +57,7 @@ async def send_msg(
                             items,
                             header_message,
                             rss.send_forward_msg,
+                            rss.send_merge_msg,
                         )
                         for group_id in rss.group_id
                     ]
@@ -88,6 +90,7 @@ async def send_private_msg(
     items: List[Dict[str, Any]],
     header_message: str,
     send_forward_msg: bool,
+    send_merge_msg: bool,
 ) -> bool:
     return await send_msgs_with_lock(
         bot=bot,
@@ -100,6 +103,7 @@ async def send_private_msg(
             user_id=user_id, message=message  # type: ignore
         ),
         send_forward_msg=send_forward_msg,
+        send_merge_msg=send_merge_msg,
     )
 
 
@@ -111,6 +115,7 @@ async def send_group_msg(
     items: List[Dict[str, Any]],
     header_message: str,
     send_forward_msg: bool,
+    send_merge_msg: bool,
 ) -> bool:
     return await send_msgs_with_lock(
         bot=bot,
@@ -123,6 +128,7 @@ async def send_group_msg(
             group_id=group_id, message=message  # type: ignore
         ),
         send_forward_msg=send_forward_msg,
+        send_merge_msg=send_merge_msg,
     )
 
 
@@ -170,6 +176,27 @@ async def send_single_msg(
                 await send_func(target_id, error_msg)
     return flag
 
+async def send_single_msgs(
+    messages: List[str],
+    target_id: Union[int, str],
+    item: Dict[str, Any],
+    header_message: str,
+    send_func: Callable[[Union[int, str], str], Coroutine[Any, Any, Dict[str, Any]]],
+) -> bool:
+    flag = False
+    try:
+        await send_func(
+            target_id, f"{header_message}\n----------------------\n{message}"
+        )
+        flag = True
+    except Exception as e:
+        error_msg = f"E: {repr(e)}\n消息发送失败！\n链接：[{item.get('link')}]"
+        logger.error(error_msg)
+        if item.get("to_send"):
+            flag = True
+            with suppress(Exception):
+                await send_func(target_id, error_msg)
+    return flag
 
 async def send_multiple_msgs(
     messages: List[str],
@@ -196,6 +223,7 @@ async def send_msgs_with_lock(
     header_message: str,
     send_func: Callable[[Union[int, str], str], Coroutine[Any, Any, Dict[str, Any]]],
     send_forward_msg: bool = False,
+    send_merge_msg: bool = False,
 ) -> bool:
     start_time = arrow.now()
     async with sending_lock[(target_id, target_type)]:
@@ -207,6 +235,10 @@ async def send_msgs_with_lock(
             flag = await try_sending_forward_msg(
                 bot, messages, target_id, target_type, items, header_message, send_func
             )
+        elif send_merge_msg and target_type != "guild_channel":
+            flag = await send_single_msgs(
+                handle_merge_message(messages), target_id, items, header_message, send_func
+            )
         else:
             flag = await send_multiple_msgs(
                 messages, target_id, items, header_message, send_func
@@ -214,6 +246,12 @@ async def send_msgs_with_lock(
         await asyncio.sleep(max(1 - (arrow.now() - start_time).total_seconds(), 0))
     return flag
 
+
+def handle_merge_message(messages: List[str]) -> str:
+    messageStr = ""
+    for message in messages:
+        messageStr = messageStr + message
+    return messageStr
 
 async def try_sending_forward_msg(
     bot: Bot,

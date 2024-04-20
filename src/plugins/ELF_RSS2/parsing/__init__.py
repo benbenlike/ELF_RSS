@@ -275,9 +275,8 @@ async def handle_message(
     item: Dict[str, Any],
     item_msg: str,
 ) -> str:
-    if rss.send_forward_msg:
+    if rss.send_forward_msg or rss.send_merge_msg:
         return ""
-
     # 发送消息并写入文件
     await handle_send_msgs(rss=rss, messages=[item_msg], items=[item], state=state)
     return ""
@@ -285,7 +284,7 @@ async def handle_message(
 
 @ParsingBase.append_after_handler()
 async def after_handler(rss: Rss, state: Dict[str, Any]) -> Dict[str, Any]:
-    if rss.send_forward_msg:
+    if rss.send_forward_msg or rss.send_merge_msg:
         # 发送消息并写入文件
         await handle_send_msgs(
             rss=rss, messages=state["messages"], items=state["items"], state=state

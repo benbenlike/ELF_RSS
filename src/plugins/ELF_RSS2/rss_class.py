@@ -42,6 +42,9 @@ class Rss:
         self.send_forward_msg: bool = (
             False  # 当一次更新多条消息时，是否尝试发送合并消息
         )
+        self.send_merge_msg: bool = (
+            False  # 当一次更新多条消息时，是否尝试合并成长消息
+        )
         if data:
             self.__dict__.update(data)
 
@@ -262,5 +265,7 @@ class Rss:
             _generate_feature_string("停止更新", self.stop),
             _generate_feature_string("PikPak离线", self.pikpak_offline),
             _generate_feature_string("PikPak离线路径匹配", self.pikpak_path_key),
+            _generate_feature_string("合并发送", self.send_forward_msg),
+            _generate_feature_string("合并成长消息发送", self.send_merge_msg),
         ]
         return "\n".join([i for i in ret_list if i != ""])
