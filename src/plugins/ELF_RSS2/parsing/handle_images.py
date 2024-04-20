@@ -100,13 +100,13 @@ async def zip_pic(url: str, content: bytes) -> Union[Image.Image, bytes, None]:
                 im.save(output, "PNG")
                 im = Image.open(output)
         # 对图像文件进行缩小处理
-        im.thumbnail((config.zip_size, config.zip_size))
-        width, height = im.size
-        logger.debug(f"Resize image to: {width} x {height}")
+        # im.thumbnail((config.zip_size, config.zip_size))
+        # width, height = im.size
+        # logger.debug(f"Resize image to: {width} x {height}")
         # 和谐
-        points = [(0, 0), (0, height - 1), (width - 1, 0), (width - 1, height - 1)]
-        for x, y in points:
-            im.putpixel((x, y), random.randint(0, 255))
+        # points = [(0, 0), (0, height - 1), (width - 1, 0), (width - 1, height - 1)]
+        # for x, y in points:
+        #     im.putpixel((x, y), random.randint(0, 255))
         return im
     else:
         if len(content) > config.gif_zip_size * 1024:

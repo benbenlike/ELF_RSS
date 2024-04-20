@@ -54,6 +54,8 @@ class Rss:
             return self.url
         # 先判断地址是否 / 开头
         #if self.url.startswith("/"):
+        if self.url.startswith("http"):
+            return self.url
         return rsshub + self.url
 
         #return f"{rsshub}/{self.url}"
