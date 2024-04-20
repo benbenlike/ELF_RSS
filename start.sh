@@ -1,3 +1,3 @@
 #!/bin/sh
-cd /home/ELF_RSS/
+cd /home/yunzai/ELF_RSS/
 nb run
