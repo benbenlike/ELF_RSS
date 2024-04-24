@@ -214,7 +214,7 @@ class ParsingRss:
             }
         )
         if change_data := self.state["change_data"]:
-            for parted_item_list in partition_list(change_data, 10):
+            for parted_item_list in partition_list(change_data, 5):
                 for item in parted_item_list:
                     item_msg = ""
                     for handler_list in self.handler.values():
@@ -235,8 +235,8 @@ class ParsingRss:
                         item_msg += tmp
                     self.state["messages"].append(item_msg)
                     self.state["items"].append(item)
-
                 _, _ = await _run_handlers(self.after_handler, self.rss, self.state)
-                self.state["messages"] = self.state["items"] = []
+                self.state["messages"] = []
+                self.state["items"] = []
         else:
             _, _ = await _run_handlers(self.after_handler, self.rss, self.state)

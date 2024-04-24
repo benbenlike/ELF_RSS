@@ -207,16 +207,20 @@ async def handle_img_combo(url: str, img_proxy: bool, rss: Optional[Rss] = None)
         如获取图片失败将会提示图片走丢了
     """
     if content := await download_image(url, img_proxy):
+        _file_path = ""
         if rss is not None and rss.download_pic:
             _url = URL(url)
             logger.debug(f"正在保存图片: {url}")
             try:
-                save_image(content=content, file_url=_url, rss=rss)
+                _file_path = save_image(content=content, file_url=_url, rss=rss)
             except Exception as e:
                 logger.warning(f"在保存图片到本地时出现错误\nE:{repr(e)}")
-        if resize_content := await zip_pic(url, content):
-            if img_base64 := get_pic_base64(resize_content):
-                return f"[CQ:image,file=base64://{img_base64}]"
+
+        if _file_path == "":
+            if resize_content := await zip_pic(url, content):
+                if img_base64 := get_pic_base64(resize_content):
+                    return f"[CQ:image,file=base64://{img_base64}]"
+        return f"[CQ:image,file=file://{_file_path}]"
     return f"\n图片走丢啦 链接：[{url}]\n"
 
 
@@ -297,7 +301,7 @@ def file_name_format(file_url: URL, rss: Rss) -> Tuple[Path, str]:
     return save_path, save_name
 
 
-def save_image(content: bytes, file_url: URL, rss: Rss) -> None:
+def save_image(content: bytes, file_url: URL, rss: Rss) -> str:
     """
     将压缩之前的原图保存到本地的电脑上
     """
@@ -310,3 +314,4 @@ def save_image(content: bytes, file_url: URL, rss: Rss) -> None:
         # 初次写入时文件夹不存在,需要创建一下
         save_path.mkdir(parents=True)
         full_save_path.write_bytes(content)
+    return full_save_path

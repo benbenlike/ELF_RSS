@@ -177,9 +177,9 @@ async def send_single_msg(
     return flag
 
 async def send_single_msgs(
-    messages: List[str],
+    message: List[str],
     target_id: Union[int, str],
-    item: Dict[str, Any],
+    items: List[Dict[str, Any]],
     header_message: str,
     send_func: Callable[[Union[int, str], str], Coroutine[Any, Any, Dict[str, Any]]],
 ) -> bool:
@@ -190,9 +190,9 @@ async def send_single_msgs(
         )
         flag = True
     except Exception as e:
-        error_msg = f"E: {repr(e)}\n消息发送失败！\n链接：[{item.get('link')}]"
+        error_msg = f"E: {repr(e)}\n长消息发送失败！]"
         logger.error(error_msg)
-        if item.get("to_send"):
+        if items[0].get("to_send"):
             flag = True
             with suppress(Exception):
                 await send_func(target_id, error_msg)
@@ -250,7 +250,8 @@ async def send_msgs_with_lock(
 def handle_merge_message(messages: List[str]) -> str:
     messageStr = ""
     for message in messages:
-        messageStr = messageStr + message
+        if isinstance(message, str):
+            messageStr = messageStr + message
     return messageStr
 
 async def try_sending_forward_msg(
