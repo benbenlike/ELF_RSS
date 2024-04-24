@@ -229,11 +229,25 @@ async def handle_img_combo(url: str, img_proxy: bool, rss: Optional[Rss] = None)
     return f"\n图片走丢啦 链接：[{url}]\n"
 
 
-async def handle_img_combo_with_content(url: str, content: bytes) -> str:
-    if resize_content := await zip_pic(url, content):
-        if img_base64 := get_pic_base64(resize_content):
-            return f"[CQ:image,file=base64://{img_base64}]"
-    return f"\n图片走丢啦 链接：[{url}]\n" if url else "\n图片走丢啦\n"
+async def handle_img_combo_with_content(url: str, content: bytes, rss: Optional[Rss] = None) -> str:
+    if rss is not None and rss.download_pic:
+        _url = URL(url)
+        logger.debug(f"正在保存图片: {url}")
+        try:
+            _file_path = save_image(content=content, file_url=_url, rss=rss)
+        except Exception as e:
+            logger.warning(f"在保存图片到本地时出现错误\nE:{repr(e)}")
+
+    if _file_path == "":
+        if resize_content := await zip_pic(url, content):
+            if img_base64 := get_pic_base64(resize_content):
+                return f"[CQ:image,file=base64://{img_base64}]"
+        return f"\n图片走丢啦 链接：[{url}]\n" if url else "\n图片走丢啦\n"
+    base_name, ext = os.path.splitext(_file_path)
+    if not ext == "PNG" and not ext == "png":
+        im = Image.open(_file_path)
+        im.save(base_name + ".png")
+    return f"[CQ:image,file=file://{_file_path}]"
 
 
 # 处理图片、视频

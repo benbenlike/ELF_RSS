@@ -25,6 +25,7 @@ async def handle_picture(rss: Rss, item: Dict[str, Any], tmp: str) -> str:
         item=item,
         img_proxy=rss.img_proxy,
         img_num=rss.max_image_number,
+        rss=rss,
     )
 
     # 判断是否开启了只推送图片
@@ -32,10 +33,10 @@ async def handle_picture(rss: Rss, item: Dict[str, Any], tmp: str) -> str:
 
 
 # 处理图片、视频
-async def handle_img(item: Dict[str, Any], img_proxy: bool, img_num: int) -> str:
+async def handle_img(item: Dict[str, Any], img_proxy: bool, img_num: int, rss: Rss) -> str:
     if item.get("image_content"):
         return await handle_img_combo_with_content(
-            item.get("gif_url", ""), item["image_content"]
+            item.get("gif_url", ""), item["image_content"], rss
         )
     html = Pq(get_summary(item))
     img_str = ""
