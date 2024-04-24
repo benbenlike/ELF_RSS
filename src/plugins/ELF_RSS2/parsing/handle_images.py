@@ -1,6 +1,7 @@
 import base64
 import random
 import re
+import os
 from io import BytesIO
 from typing import Any, Dict, Optional, Tuple, Union
 
@@ -220,6 +221,10 @@ async def handle_img_combo(url: str, img_proxy: bool, rss: Optional[Rss] = None)
             if resize_content := await zip_pic(url, content):
                 if img_base64 := get_pic_base64(resize_content):
                     return f"[CQ:image,file=base64://{img_base64}]"
+        base_name, ext = os.path.splitext(_file_path)
+        if not ext == "PNG" and not ext == "png":
+            im = Image.open(_file_path)
+            im.save(base_name + ".png")
         return f"[CQ:image,file=file://{_file_path}]"
     return f"\n图片走丢啦 链接：[{url}]\n"
 
