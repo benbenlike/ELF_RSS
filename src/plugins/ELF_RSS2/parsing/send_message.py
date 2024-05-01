@@ -207,6 +207,10 @@ async def send_single_msgs(
                 target_id, f"{header_message}\n----------------------\n{message}"
             )
         flag = True
+    except NetworkError:
+        # 如果图片体积过大或数量过多，很可能触发这个错误，但实际上发送成功，不过高概率吞图，只警告不处理
+        logger.warning("图片过大或数量过多，可能发送失败！")
+        flag = True
     except Exception as e:
         error_msg = f"E: {repr(e)}\n长消息发送失败！]"
         logger.error(error_msg)
