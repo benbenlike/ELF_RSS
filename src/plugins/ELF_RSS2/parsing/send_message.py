@@ -40,6 +40,7 @@ async def send_msg(
                         header_message,
                         rss.send_forward_msg,
                         rss.send_merge_msg,
+                        rss.only_pic,
                     )
                     for user_id in rss.user_id
                 ]
@@ -58,6 +59,7 @@ async def send_msg(
                             header_message,
                             rss.send_forward_msg,
                             rss.send_merge_msg,
+                            rss.only_pic
                         )
                         for group_id in rss.group_id
                     ]
@@ -91,6 +93,7 @@ async def send_private_msg(
     header_message: str,
     send_forward_msg: bool,
     send_merge_msg: bool,
+    only_pic: bool,
 ) -> bool:
     return await send_msgs_with_lock(
         bot=bot,
@@ -104,6 +107,7 @@ async def send_private_msg(
         ),
         send_forward_msg=send_forward_msg,
         send_merge_msg=send_merge_msg,
+        only_pic=only_pic,
     )
 
 
@@ -116,6 +120,7 @@ async def send_group_msg(
     header_message: str,
     send_forward_msg: bool,
     send_merge_msg: bool,
+    only_pic: bool,
 ) -> bool:
     return await send_msgs_with_lock(
         bot=bot,
@@ -129,6 +134,7 @@ async def send_group_msg(
         ),
         send_forward_msg=send_forward_msg,
         send_merge_msg=send_merge_msg,
+        only_pic=only_pic,
     )
 
 
@@ -160,12 +166,18 @@ async def send_single_msg(
     item: Dict[str, Any],
     header_message: str,
     send_func: Callable[[Union[int, str], str], Coroutine[Any, Any, Dict[str, Any]]],
+    only_pic: bool,
 ) -> bool:
     flag = False
     try:
-        await send_func(
-            target_id, f"{header_message}\n----------------------\n{message}"
-        )
+        if only_pic:
+            await send_func(
+                target_id, f"{message}"
+            )
+        else:
+            await send_func(
+                target_id, f"{header_message}\n----------------------\n{message}"
+            )
         flag = True
     except Exception as e:
         error_msg = f"E: {repr(e)}\n消息发送失败！\n链接：[{item.get('link')}]"
@@ -182,12 +194,18 @@ async def send_single_msgs(
     items: List[Dict[str, Any]],
     header_message: str,
     send_func: Callable[[Union[int, str], str], Coroutine[Any, Any, Dict[str, Any]]],
+    only_pic: bool,
 ) -> bool:
     flag = False
     try:
-        await send_func(
-            target_id, f"{header_message}\n----------------------\n{message}"
-        )
+        if only_pic:
+            await send_func(
+                target_id, f"{message}"
+            )
+        else:
+            await send_func(
+                target_id, f"{header_message}\n----------------------\n{message}"
+            )
         flag = True
     except Exception as e:
         error_msg = f"E: {repr(e)}\n长消息发送失败！]"
@@ -224,12 +242,13 @@ async def send_msgs_with_lock(
     send_func: Callable[[Union[int, str], str], Coroutine[Any, Any, Dict[str, Any]]],
     send_forward_msg: bool = False,
     send_merge_msg: bool = False,
+    only_pic: bool = False,
 ) -> bool:
     start_time = arrow.now()
     async with sending_lock[(target_id, target_type)]:
         if len(messages) == 1:
             flag = await send_single_msg(
-                messages[0], target_id, items[0], header_message, send_func
+                messages[0], target_id, items[0], header_message, send_func, only_pic
             )
         elif send_forward_msg and target_type != "guild_channel":
             flag = await try_sending_forward_msg(
@@ -237,7 +256,7 @@ async def send_msgs_with_lock(
             )
         elif send_merge_msg and target_type != "guild_channel":
             flag = await send_single_msgs(
-                handle_merge_message(messages), target_id, items, header_message, send_func
+                handle_merge_message(messages), target_id, items, header_message, send_func, only_pic
             )
         else:
             flag = await send_multiple_msgs(

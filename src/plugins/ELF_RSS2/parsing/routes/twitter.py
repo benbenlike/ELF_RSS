@@ -29,7 +29,7 @@ async def handle_picture(rss: Rss, item: Dict[str, Any], tmp: str) -> str:
     )
 
     # 判断是否开启了只推送图片
-    return f"{res}\n" if rss.only_pic else f"{tmp + res}\n"
+    return f"{res}" if rss.only_pic else f"{tmp + res}\n"
 
 
 # 处理图片、视频
@@ -48,7 +48,7 @@ async def handle_img(item: Dict[str, Any], img_proxy: bool, img_num: int, rss: R
         doc_img = doc_img[:img_num]
     for img in doc_img:
         url = img.attr("src")
-        img_str += await handle_img_combo(url, img_proxy)
+        img_str += await handle_img_combo(url, img_proxy, rss)
 
     # 处理视频
     if doc_video := html("video"):

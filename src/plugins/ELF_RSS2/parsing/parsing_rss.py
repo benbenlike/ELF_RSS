@@ -214,7 +214,7 @@ class ParsingRss:
             }
         )
         if change_data := self.state["change_data"]:
-            for parted_item_list in partition_list(change_data, 5):
+            for parted_item_list in partition_list(change_data, 10):
                 for item in parted_item_list:
                     item_msg = ""
                     for handler_list in self.handler.values():
